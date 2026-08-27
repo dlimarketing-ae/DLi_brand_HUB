@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="light" class="scene-loading">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -108,6 +108,21 @@ img{ max-width:100%; display:block; }
 }
 #scene-canvas.ready{ opacity:1; }
 
+/* Initial portal load: show the 3D scene first.
+   Page text/content stays hidden until the scene has rendered. */
+html.scene-loading main,
+html.scene-loading #topbar,
+html.scene-loading #progress-rail,
+html.scene-loading #progress-ticks{
+  visibility:hidden !important;
+}
+html.scene-loaded main,
+html.scene-loaded #topbar,
+html.scene-loaded #progress-rail,
+html.scene-loaded #progress-ticks{
+  visibility:visible;
+}
+
 main{ position:relative; z-index:2; }
 
 .veil{
@@ -197,7 +212,10 @@ main{ position:relative; z-index:2; }
 #hero-copy{
   position:relative; z-index:4; text-align:center;
   padding:0 20px; max-width:1100px;
+  visibility:hidden;
 }
+html.scene-loaded #hero-copy{ visibility:visible; }
+html.scene-loading #hero-copy{ visibility:hidden !important; }
 .hero-eyebrow{
   font-family:var(--font-mono); font-size:12px; letter-spacing:.24em;
   text-transform:uppercase; color:var(--ink-dim); margin-bottom:22px;
@@ -738,18 +756,31 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 [data-editable].editable-active:hover{ background:rgba(213,69,75,.08); outline-color:var(--accent); }
 [data-editable].editable-active:focus{ background:rgba(213,69,75,.1); outline:1px solid var(--accent); }
 
-/* Light mode: company detail panel uses a dark grey surface. */
-[data-theme="light"] #drawer{ background:#2b2b2b !important; color:#f1eee7; }
-[data-theme="light"] #drawer .drawer-head{ background:#2b2b2b !important; }
-[data-theme="light"] #drawer .drawer-name{ color:#ffffff; }
-[data-theme="light"] #drawer .drawer-desc{ color:#c9c6bf; }
+/* Light mode: company detail panel stays clean white. */
+[data-theme="light"] #drawer{
+  background:#ffffff !important;
+  color:#171717 !important;
+  border-left-color:#d9d9d6 !important;
+}
+[data-theme="light"] #drawer .drawer-head{ background:#ffffff !important; }
+[data-theme="light"] #drawer .drawer-name{ color:#171717 !important; }
+[data-theme="light"] #drawer .drawer-desc{ color:#5f5f5b !important; }
 [data-theme="light"] #drawer .asset-section-title,
-[data-theme="light"] #drawer .group-name{ color:#c9c6bf; }
-[data-theme="light"] #drawer .asset-row{ background:#333333; border-color:rgba(255,255,255,.12); }
-[data-theme="light"] #drawer .asset-row:hover{ background:#3a3a3a; border-color:rgba(255,255,255,.22); }
-[data-theme="light"] #drawer .asset-title{ color:#ffffff; }
-[data-theme="light"] #drawer .asset-sub{ color:#a9a69f; }
-[data-theme="light"] #drawer .asset-icon{ background:#252525; border-color:rgba(255,255,255,.14); }
+[data-theme="light"] #drawer .group-name{ color:#666661 !important; }
+[data-theme="light"] #drawer .asset-row{
+  background:#f4f4f2 !important;
+  border-color:#d8d8d4 !important;
+}
+[data-theme="light"] #drawer .asset-row:hover{
+  background:#ececea !important;
+  border-color:#c8c8c3 !important;
+}
+[data-theme="light"] #drawer .asset-title{ color:#171717 !important; }
+[data-theme="light"] #drawer .asset-sub{ color:#777772 !important; }
+[data-theme="light"] #drawer .asset-icon{
+  background:#ffffff !important;
+  border-color:#d0d0cb !important;
+}
 </style>
 </head>
 <body>
@@ -2237,9 +2268,23 @@ function init(){
   setupEditableText();
   setupTheme();
   var ok = reduceMotion ? false : initScene();
-  if(!ok) initFallback();
-  requestAnimationFrame(tick);
-  if(ok) animateScene();
+
+  if(ok){
+    /* Render one complete 3D frame before revealing portal content.
+       This prevents text from flashing before the 3D object appears. */
+    try{ renderer.render(scene, camera); }catch(e){}
+    requestAnimationFrame(function(){
+      document.documentElement.classList.remove("scene-loading");
+      document.documentElement.classList.add("scene-loaded");
+      requestAnimationFrame(tick);
+      animateScene();
+    });
+  }else{
+    initFallback();
+    document.documentElement.classList.remove("scene-loading");
+    document.documentElement.classList.add("scene-loaded");
+    requestAnimationFrame(tick);
+  }
 }
 
 loadRemoteState(function(){
