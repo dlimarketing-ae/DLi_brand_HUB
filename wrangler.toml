@@ -1,0 +1,20 @@
+name = "dli-brand-hub"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+# Serves everything in ./public as the static site (index.html at "/", etc.)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 database binding — this is what makes env.DB work in src/worker.js.
+# Replace database_id below with your actual database's ID (see
+# DEPLOY-GUIDE.md for exactly where to find it). This file, once
+# committed and pushed, is what Cloudflare actually uses on deploy —
+# bindings added by hand in the dashboard's "Bindings" tab do not
+# persist for Workers deployed this way (via `wrangler deploy` from Git),
+# which is why that approach wasn't sticking.
+[[d1_databases]]
+binding = "DB"
+database_name = "dli-brand-hub-db"
+database_id = "d781d7ea-b7df-4263-a1ec-b396bbf8b48e"
