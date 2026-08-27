@@ -17,20 +17,20 @@
    the same custom properties via [data-theme="dark"].
    ============================================================ */
 :root{
-  --bg:            #f2f1ee;
+  --bg:            #ffffff;
   --bg-1:          #ffffff;
   --bg-2:          #f8f7f4;
   --panel:         rgba(255,255,255,.7);
   --panel-strong:  rgba(255,255,255,.92);
   --ink:           #17140f;
   --ink-dim:       #56524a;
-  --ink-faint:     #8b877e;
+  --ink-faint:     #625f58;
   --line:          rgba(23,20,15,.10);
   --line-strong:   rgba(23,20,15,.18);
-  --accent:        #d5454b;
+  --accent:        #b9363d;
   --accent-ink:    #1c0708;
-  --accent-dim:    rgba(213,69,75,.35);
-  --accent-glow:   rgba(213,69,75,.16);
+  --accent-dim:    rgba(185,54,61,.40);
+  --accent-glow:   rgba(185,54,61,.18);
   --bronze:        #8a6d4a;
   --forest:        #17231b;
   --scrim:         rgba(238,236,231,.88);
@@ -55,7 +55,7 @@
   --panel-strong:  rgba(14,14,16,.86);
   --ink:           #f1eee7;
   --ink-dim:       #a49f95;
-  --ink-faint:     #6b6862;
+  --ink-faint:     #a9a59c;
   --line:          rgba(241,238,231,.09);
   --line-strong:   rgba(241,238,231,.18);
   --scrim:         rgba(5,5,6,.86);
@@ -173,7 +173,7 @@ main{ position:relative; z-index:2; }
   transition:border-color .3s var(--ease), background .3s var(--ease), transform .2s var(--ease);
   display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
 }
-.btn:hover{ border-color:var(--accent-dim); background:rgba(213,69,75,.07); }
+.btn:hover{ border-color:var(--accent-dim); background:rgba(185,54,61,.08); }
 .btn:active{ transform:scale(.97); }
 .btn-primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
 .btn-primary:hover{ background:#ff8534; }
@@ -235,7 +235,7 @@ main{ position:relative; z-index:2; }
   margin-top:34px; opacity:0; transform:translateY(14px);
   background:rgba(255,255,255,.03); border-color:var(--line-strong);
 }
-.hero-about-btn:hover{ border-color:var(--accent-dim); background:rgba(213,69,75,.08); }
+.hero-about-btn:hover{ border-color:var(--accent-dim); background:rgba(185,54,61,.09); }
 
 /* ---------- about panel (glass) ---------- */
 /* Frosted glass surface that adapts with the site theme: light frosted
@@ -382,7 +382,7 @@ main{ position:relative; z-index:2; }
   cursor:pointer; background:none; border-left:none; border-right:none; border-top:none;
   width:100%; text-align:left; color:var(--ink);
 }
-.search-result:hover, .search-result:focus-visible{ background:rgba(213,69,75,.06); }
+.search-result:hover, .search-result:focus-visible{ background:rgba(185,54,61,.07); }
 .search-result .sr-name{ font-family:var(--font-display); font-weight:700; font-size:18px; }
 .search-result .sr-cat{ font-family:var(--font-mono); font-size:10px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.08em; }
 #search-close{ position:absolute; top:22px; right:clamp(20px,4vw,48px); }
@@ -416,7 +416,7 @@ main{ position:relative; z-index:2; }
 .card:hover{ border-color:var(--accent-dim); box-shadow:0 24px 60px -20px rgba(0,0,0,.6); }
 .card::before{
   content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-  background:radial-gradient(320px circle at var(--px,50%) var(--py,50%), rgba(213,69,75,.10), transparent 60%);
+  background:radial-gradient(320px circle at var(--px,50%) var(--py,50%), rgba(185,54,61,.11), transparent 60%);
   opacity:0; transition:opacity .4s var(--ease);
 }
 .card:hover::before{ opacity:1; }
@@ -492,7 +492,7 @@ main{ position:relative; z-index:2; }
 /* quick PNG hero row */
 .quickpng-row{
   display:flex; align-items:center; gap:14px; padding:16px; border-radius:14px;
-  border:1px solid var(--accent-dim); background:linear-gradient(155deg, rgba(213,69,75,.08), transparent 60%);
+  border:1px solid var(--accent-dim); background:linear-gradient(155deg, rgba(185,54,61,.09), transparent 60%);
   margin-bottom:30px;
 }
 .quickpng-icon{
@@ -595,7 +595,7 @@ body.admin-mode #admin-corner:focus-within #admin-toggle{ opacity:1; }
   display:none; align-items:center; gap:7px; backdrop-filter:blur(8px);
   cursor:pointer; appearance:none; transition:background .25s var(--ease), border-color .25s var(--ease);
 }
-#admin-signal:hover{ background:rgba(213,69,75,.14); border-color:var(--accent); }
+#admin-signal:hover{ background:rgba(185,54,61,.15); border-color:var(--accent); }
 #admin-signal svg{ opacity:.7; }
 #admin-signal.show{ display:inline-flex; }
 #admin-signal .pulse{ width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 1.8s infinite; }
@@ -735,7 +735,7 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   outline:1px dashed var(--accent-dim); outline-offset:5px; border-radius:4px;
   cursor:text; transition:background .2s var(--ease), outline-color .2s var(--ease);
 }
-[data-editable].editable-active:hover{ background:rgba(213,69,75,.08); outline-color:var(--accent); }
+[data-editable].editable-active:hover{ background:rgba(185,54,61,.09); outline-color:var(--accent); }
 [data-editable].editable-active:focus{ background:rgba(213,69,75,.1); outline:1px solid var(--accent); }
 
 /* Light mode: company detail panel uses a dark grey surface. */
@@ -750,6 +750,57 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 [data-theme="light"] #drawer .asset-title{ color:#ffffff; }
 [data-theme="light"] #drawer .asset-sub{ color:#a9a69f; }
 [data-theme="light"] #drawer .asset-icon{ background:#252525; border-color:rgba(255,255,255,.14); }
+
+/* ---------- accessibility / contrast safeguards ---------- */
+:root{ --focus-ring:#7a2026; }
+[data-theme="dark"]{ --focus-ring:#ff8b90; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+  outline:3px solid var(--focus-ring) !important;
+  outline-offset:3px !important;
+}
+
+/* Light mode uses a clean white portal surface. */
+[data-theme="light"] html,
+[data-theme="light"] body,
+[data-theme="light"] .veil{
+  background:#ffffff !important;
+}
+
+/* High-contrast dark company drawer in light mode. */
+[data-theme="light"] #drawer{ background:#2b2b2b !important; color:#ffffff !important; }
+[data-theme="light"] #drawer .drawer-head{ background:#2b2b2b !important; }
+[data-theme="light"] #drawer .drawer-name,
+[data-theme="light"] #drawer .asset-title{ color:#ffffff !important; }
+[data-theme="light"] #drawer .drawer-desc,
+[data-theme="light"] #drawer .group-name,
+[data-theme="light"] #drawer .asset-section-title{ color:#d6d2ca !important; }
+[data-theme="light"] #drawer .asset-sub,
+[data-theme="light"] #drawer .quickpng-sub{ color:#bcb8b0 !important; }
+[data-theme="light"] #drawer .asset-row{ background:#333333 !important; }
+[data-theme="light"] #drawer .asset-row:hover{ background:#3a3a3a !important; }
+
+/* Improve faint/secondary text in dark mode. */
+[data-theme="dark"] .asset-sub,
+[data-theme="dark"] .quickpng-sub,
+[data-theme="dark"] .card-assets,
+[data-theme="dark"] #result-count,
+[data-theme="dark"] .search-result .sr-cat,
+[data-theme="dark"] .field-hint,
+[data-theme="dark"] #progress-ticks .tick{
+  color:#aaa69d !important;
+}
+
+/* Readable form labels and placeholders in light mode. */
+[data-theme="light"] .field label,
+[data-theme="light"] .field-hint{ color:#4f4b45; }
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder,
+[data-theme="light"] select{ color:#625f58; opacity:1; }
+
+/* Readable placeholders in dark mode. */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder{ color:#aaa69d; opacity:1; }
 </style>
 </head>
 <body>
