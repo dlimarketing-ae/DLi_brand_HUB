@@ -552,6 +552,29 @@ main{ position:relative; z-index:2; }
   display:flex; align-items:flex-end; justify-content:flex-start;
   padding:18px;
 }
+#admin-actions-panel{
+  position:absolute;
+  left:18px;
+  bottom:76px;
+  display:none;
+  flex-direction:column;
+  gap:7px;
+  min-width:150px;
+  padding:9px;
+  border:1px solid var(--line-strong);
+  border-radius:14px;
+  background:var(--panel-strong);
+  box-shadow:0 12px 35px rgba(0,0,0,.14);
+  backdrop-filter:blur(12px);
+}
+body.admin-mode #admin-actions-panel{ display:flex; }
+.admin-action-btn{
+  width:100%;
+  justify-content:flex-start;
+  white-space:nowrap;
+  font-size:11px;
+  min-height:34px;
+}
 #admin-corner #admin-toggle{
   opacity:0; transform:scale(.8);
   transition:opacity .35s var(--ease), transform .35s var(--ease), border-color .3s var(--ease), color .3s var(--ease);
@@ -714,6 +737,19 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 }
 [data-editable].editable-active:hover{ background:rgba(213,69,75,.08); outline-color:var(--accent); }
 [data-editable].editable-active:focus{ background:rgba(213,69,75,.1); outline:1px solid var(--accent); }
+
+/* Light mode: company detail panel uses a dark grey surface. */
+[data-theme="light"] #drawer{ background:#2b2b2b !important; color:#f1eee7; }
+[data-theme="light"] #drawer .drawer-head{ background:#2b2b2b !important; }
+[data-theme="light"] #drawer .drawer-name{ color:#ffffff; }
+[data-theme="light"] #drawer .drawer-desc{ color:#c9c6bf; }
+[data-theme="light"] #drawer .asset-section-title,
+[data-theme="light"] #drawer .group-name{ color:#c9c6bf; }
+[data-theme="light"] #drawer .asset-row{ background:#333333; border-color:rgba(255,255,255,.12); }
+[data-theme="light"] #drawer .asset-row:hover{ background:#3a3a3a; border-color:rgba(255,255,255,.22); }
+[data-theme="light"] #drawer .asset-title{ color:#ffffff; }
+[data-theme="light"] #drawer .asset-sub{ color:#a9a69f; }
+[data-theme="light"] #drawer .asset-icon{ background:#252525; border-color:rgba(255,255,255,.14); }
 </style>
 </head>
 <body>
@@ -927,31 +963,20 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 
 <div class="modal-overlay" id="asset-modal">
   <div class="modal">
-    <h3 id="asset-modal-title">Add files</h3>
+    <h3 id="asset-modal-title">Add link</h3>
     <div class="field">
-      <label>Type</label>
-      <div class="type-toggle">
-        <button type="button" id="am-type-files" class="active">Upload files</button>
-        <button type="button" id="am-type-link">Add link</button>
-      </div>
+      <label for="am-link-title">Link text</label>
+      <input type="text" id="am-link-title" placeholder="e.g. Brand Guidelines">
+      <div class="field-hint">This is the text the user will see. The actual URL is never shown to users.</div>
     </div>
-    <div class="field" id="am-files-field">
-      <label>Files</label>
-      <label class="file-drop" id="asset-file-drop">
-        <span id="asset-file-label">Click to choose one or more files, up to 15 MB each — any file type</span>
-        <input type="file" id="asset-file-input" multiple>
-      </label>
-      <div class="field-hint">Files are embedded into this page's exported JSON — use Export to save your uploads.</div>
-    </div>
-    <div class="field" id="am-link-field" style="display:none;">
-      <label for="am-link-title">Link title</label>
-      <input type="text" id="am-link-title" placeholder="e.g. Brand guidelines (Google Drive)">
-      <label for="am-link-url" style="margin-top:12px;">URL</label>
+    <div class="field">
+      <label for="am-link-url">Destination URL</label>
       <input type="text" id="am-link-url" placeholder="https://…">
+      <div class="field-hint">Enter the full destination URL. Users will only see the link text above.</div>
     </div>
     <div class="modal-actions">
       <button class="btn" data-close-modal>Cancel</button>
-      <button class="btn btn-primary" id="asset-save-btn">Save</button>
+      <button class="btn btn-primary" id="asset-save-btn">Save link</button>
     </div>
   </div>
 </div>
@@ -986,6 +1011,10 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 <input type="file" id="quickpng-input" accept="image/png" class="sr-only">
 
 <div id="admin-corner" aria-hidden="false">
+  <div id="admin-actions-panel" class="admin-only" aria-label="Admin actions">
+    <button class="btn btn-primary admin-action-btn" id="admin-add-company">+ Add company</button>
+    <button class="btn admin-action-btn" id="admin-add-files">+ Add files</button>
+  </div>
   <button class="btn btn-icon" id="admin-toggle" aria-pressed="false" aria-label="Toggle admin mode" title="Admin">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
   </button>
@@ -1770,7 +1799,7 @@ function renderGroups(c){
     head.innerHTML = '<span class="group-name">'+escapeHtml(g.name)+' <span style="opacity:.6;">('+g.items.length+')</span></span>';
     var actions = el("div", "group-actions admin-only", "");
     actions.style.display = isAdmin ? "flex" : "none";
-    var addBtn = el("button","mini-btn",""); addBtn.setAttribute("aria-label","Add to "+g.name); addBtn.title="Add file or link";
+    var addBtn = el("button","mini-btn",""); addBtn.setAttribute("aria-label","Add link to "+g.name); addBtn.title="Add link";
     addBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
     addBtn.addEventListener("click", function(){ openAssetModal(c.id, g.id); });
     var renameBtn = el("button","mini-btn",""); renameBtn.setAttribute("aria-label","Rename "+g.name); renameBtn.title="Rename category";
@@ -1779,7 +1808,7 @@ function renderGroups(c){
     var delBtn = el("button","mini-btn",""); delBtn.setAttribute("aria-label","Delete "+g.name); delBtn.title="Delete category";
     delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6"/></svg>';
     delBtn.addEventListener("click", function(){
-      if(confirm('Delete category "'+g.name+'" and its '+g.items.length+' file(s)?')){
+      if(confirm('Delete category "'+g.name+'" and its '+g.items.length+' link(s)?')){
         c.groups = c.groups.filter(function(x){ return x.id!==g.id; });
         renderGroups(c); touch();
         toast("Category deleted", "ok");
@@ -1790,12 +1819,14 @@ function renderGroups(c){
     group.appendChild(head);
 
     if(!g.items.length){
-      group.appendChild(el("div","group-empty", isAdmin ? "No files yet — use + to add." : "No files yet."));
+      group.appendChild(el("div","group-empty", isAdmin ? "No links yet — use + to add." : "No links available."));
     }else{
       g.items.forEach(function(a){
         var row = el("div", "asset-row", "");
         var isLink = a.kind === "link";
-        var sub = isLink ? (a.url) : (fmtBytes(a.size) + " · Updated " + fmtDate(a.updated));
+        var sub = isLink
+          ? (isAdmin ? ("URL · " + a.url) : "External link")
+          : (fmtBytes(a.size) + " · Updated " + fmtDate(a.updated));
         row.innerHTML =
           '<div class="asset-icon">'+(isLink?ICON_LINK:ICON_FILE)+'</div>'+
           '<div class="asset-meta"><div class="asset-title">'+escapeHtml(a.title)+'</div><div class="asset-sub">'+escapeHtml(sub)+'</div></div>'+
@@ -1992,6 +2023,13 @@ function openCompanyModal(id){
   setTimeout(function(){ $("#cm-name").focus(); }, 60);
 }
 $("#add-company-btn").addEventListener("click", function(){ openCompanyModal(null); });
+$("#admin-add-company").addEventListener("click", function(){ openCompanyModal(null); });
+$("#admin-add-files").addEventListener("click", function(){
+  if(!currentDrawerId){ toast("Open a company first", "err"); return; }
+  var c = findCompany(currentDrawerId);
+  if(!c || !c.groups.length){ toast("This company has no categories", "err"); return; }
+  openAssetModal(c.id, c.groups[0].id);
+});
 $("#company-save-btn").addEventListener("click", function(){
   var name = $("#cm-name").value.trim();
   if(!name){ toast("Company name is required", "err"); return; }
@@ -2065,69 +2103,28 @@ var assetModalMode = "files";
 function openAssetModal(companyId, groupId){
   assetModalCompanyId = companyId; assetModalGroupId = groupId; pendingFiles = [];
   var c = findCompany(companyId), g = findGroup(c, groupId);
-  $("#asset-modal-title").textContent = "Add to " + (g ? g.name : "category");
-  setAssetModalMode("files");
-  $("#asset-file-label").textContent = "Click to choose one or more files, up to 15 MB each — any file type";
-  $("#asset-file-input").value = "";
-  $("#am-link-title").value = ""; $("#am-link-url").value = "";
+  if(!c || !g) return;
+  $("#asset-modal-title").textContent = "Add link to " + g.name;
+  $("#am-link-title").value = "";
+  $("#am-link-url").value = "";
   openModal("#asset-modal");
+  setTimeout(function(){ $("#am-link-title").focus(); }, 60);
 }
-function setAssetModalMode(mode){
-  assetModalMode = mode;
-  $("#am-type-files").classList.toggle("active", mode==="files");
-  $("#am-type-link").classList.toggle("active", mode==="link");
-  $("#am-files-field").style.display = mode==="files" ? "" : "none";
-  $("#am-link-field").style.display = mode==="link" ? "" : "none";
-}
-$("#am-type-files").addEventListener("click", function(){ setAssetModalMode("files"); });
-$("#am-type-link").addEventListener("click", function(){ setAssetModalMode("link"); });
-$("#asset-file-drop").addEventListener("click", function(){ $("#asset-file-input").click(); });
-$("#asset-file-input").addEventListener("change", function(e){
-  var files = Array.prototype.slice.call(e.target.files);
-  var tooBig = files.filter(function(f){ return f.size > 15*1024*1024; });
-  if(tooBig.length){ toast(tooBig.length + " file(s) exceed 15 MB and were skipped", "err"); }
-  pendingFiles = files.filter(function(f){ return f.size <= 15*1024*1024; });
-  $("#asset-file-label").textContent = pendingFiles.length
-    ? pendingFiles.length + " file" + (pendingFiles.length===1?"":"s") + " selected"
-    : "Click to choose one or more files, up to 15 MB each — any file type";
-});
 $("#asset-save-btn").addEventListener("click", function(){
   var c = findCompany(assetModalCompanyId), g = findGroup(c, assetModalGroupId);
   if(!c || !g) return;
-
-  if(assetModalMode==="link"){
-    var url = $("#am-link-url").value.trim();
-    if(!url){ toast("Enter a URL", "err"); return; }
-    var title = $("#am-link-title").value.trim() || url;
-    g.items.push({ id: uid(), kind:"link", title: title, url: url, updated: new Date().toISOString() });
-    $("#asset-modal").classList.remove("open");
-    renderGroups(c); touch();
-    toast("Link added", "ok");
-    return;
-  }
-
-  if(!pendingFiles.length){ toast("Choose at least one file", "err"); return; }
-  var remaining = pendingFiles.length;
-  pendingFiles.forEach(function(f){
-    var reader = new FileReader();
-    reader.onload = function(){
-      g.items.push({
-        id: uid(), kind:"file", title: f.name, filename: f.name,
-        dataUrl: reader.result, size: f.size, updated: new Date().toISOString()
-      });
-      remaining--;
-      if(remaining===0){
-        $("#asset-modal").classList.remove("open");
-        renderGroups(c); touch();
-        toast("Files added", "ok");
-      }
-    };
-    reader.onerror = function(){
-      remaining--;
-      toast("Could not read " + f.name, "err");
-    };
-    reader.readAsDataURL(f);
-  });
+  var url = $("#am-link-url").value.trim();
+  var title = $("#am-link-title").value.trim();
+  if(!title){ toast("Enter the link text", "err"); return; }
+  if(!url){ toast("Enter a destination URL", "err"); return; }
+  try{
+    var parsed = new URL(url, window.location.href);
+    if(!/^https?:$/i.test(parsed.protocol)){ toast("Use an HTTP or HTTPS URL", "err"); return; }
+  }catch(e){ toast("Enter a valid URL", "err"); return; }
+  g.items.push({ id: uid(), kind:"link", title:title, url:url, updated:new Date().toISOString() });
+  $("#asset-modal").classList.remove("open");
+  renderGroups(c); touch();
+  toast("Link added", "ok");
 });
 
 /* ---------- quick PNG (single file, dedicated) ---------- */
