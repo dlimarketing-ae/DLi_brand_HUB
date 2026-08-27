@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light" class="scene-loading">
+<html lang="en" data-theme="dark" class="scene-loading">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -171,12 +171,20 @@ main{ position:relative; z-index:2; }
   pointer-events:none;
 }
 #topbar > *{ pointer-events:auto; }
+.brand-wrap{ display:flex; align-items:center; gap:8px; }
 .brand-mark{
   font-family:var(--font-display); font-weight:800; font-size:14px;
   letter-spacing:.04em; display:flex; align-items:center; gap:9px;
   text-decoration:none;
 }
 .brand-mark .dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); }
+.brand-icon{ display:flex; align-items:center; justify-content:center; flex:none; }
+.brand-icon img{
+  width:22px; height:22px; border-radius:7px; object-fit:cover;
+  border:1px solid var(--line-strong);
+}
+#edit-portal-btn{ width:28px; height:28px; padding:0; opacity:.6; }
+#edit-portal-btn:hover{ opacity:1; }
 
 #topbar-actions{ display:flex; align-items:center; gap:10px; }
 
@@ -209,6 +217,14 @@ main{ position:relative; z-index:2; }
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 }
+#mouse-glow{
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:radial-gradient(560px circle at var(--mx,50%) var(--my,40%), var(--accent-glow), transparent 62%);
+  opacity:0; transition:opacity .5s var(--ease);
+}
+#mouse-glow.show{ opacity:1; }
+@media (hover:none){ #mouse-glow{ display:none; } }
+
 #hero-copy{
   position:relative; z-index:4; text-align:center;
   padding:0 20px; max-width:1100px;
@@ -804,13 +820,24 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 <div id="save-status" aria-live="polite"></div>
 
 <header id="topbar">
-  <a class="brand-mark" href="#hero"><span class="dot"></span><span data-editable="brandMark">DLI BRAND HUB</span></a>
+  <div class="brand-wrap">
+    <a class="brand-mark" href="#hero">
+      <span class="brand-icon" id="brand-icon"><span class="dot"></span></span>
+      <span data-editable="brandMark" data-editable-default="DLI BRAND HUB">DLI BRAND HUB</span>
+    </a>
+    <button class="btn btn-icon admin-only" id="edit-portal-btn" aria-label="Edit portal name &amp; icon" title="Edit portal name &amp; icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    </button>
+  </div>
   <div id="topbar-actions">
     <button class="btn" id="open-search" aria-haspopup="dialog">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       Search
     </button>
-    <button class="btn btn-icon" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+    <button class="btn btn-icon" id="open-connect" aria-haspopup="dialog" aria-label="Connect with the marketing team" title="Connect with the marketing team">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </button>
+    <button class="btn btn-icon" id="theme-toggle" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
       <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     </button>
   </div>
@@ -823,6 +850,7 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   ============================================================ -->
   <section id="hero" data-scene="hero">
     <div id="hero-stage">
+      <div id="mouse-glow" aria-hidden="true"></div>
       <div id="hero-copy">
         <p class="hero-eyebrow" id="hero-eyebrow" data-editable="heroEyebrow">The DLI Group</p>
         <h1 class="hero-title" id="hero-title" aria-label="DLI Brand Hub">
@@ -1038,6 +1066,79 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   </div>
 </div>
 
+<div class="modal-overlay" id="portal-modal">
+  <div class="modal">
+    <h3>Portal settings</h3>
+    <div class="field">
+      <label for="pm-name">Portal name</label>
+      <input type="text" id="pm-name" placeholder="e.g. DLI Brand Hub">
+    </div>
+    <div class="field">
+      <label>Portal icon</label>
+      <label class="file-drop" id="pm-icon-drop">
+        <span id="pm-icon-label">Click to choose an icon image</span>
+        <input type="file" id="pm-icon-input" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="pm-icon-preview" class="company-profile-preview" aria-live="polite"></div>
+      <div class="field-hint">Shown in the header next to the portal name. Maximum 5 MB.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn btn-primary" id="portal-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal" style="max-width:440px;">
+    <h3>Connect with Marketing</h3>
+    <div id="connect-list"></div>
+    <button class="btn admin-only" id="connect-add-person" style="margin-top:6px;width:100%;justify-content:center;">+ Add person</button>
+    <div class="modal-actions">
+      <button class="btn" data-close-modal>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="person-modal">
+  <div class="modal">
+    <h3 id="person-modal-title">Add person</h3>
+    <div class="field"><label for="pn-name">Name</label><input type="text" id="pn-name"></div>
+    <div class="field"><label for="pn-phone">Phone</label><input type="text" id="pn-phone" placeholder="+9715XXXXXXXX"></div>
+    <div class="field"><label for="pn-email">Email</label><input type="text" id="pn-email" placeholder="name@company.com"></div>
+    <div class="field">
+      <label>Profile picture</label>
+      <label class="file-drop" id="pn-profile-drop">
+        <span id="pn-profile-label">Click to choose an image (JPG, PNG, WebP)</span>
+        <input type="file" id="pn-profile-input" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="pn-profile-preview" class="company-profile-preview" aria-live="polite"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger admin-only" id="person-delete-btn" style="margin-right:auto;">Delete</button>
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn btn-primary" id="person-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="callchat-modal">
+  <div class="modal" style="max-width:320px;text-align:center;">
+    <h3 id="callchat-title" style="margin-bottom:8px;">Contact</h3>
+    <p style="color:var(--ink-dim);font-size:13px;margin:0 0 22px;">How would you like to reach out?</p>
+    <div class="modal-actions" style="justify-content:center;">
+      <a class="btn btn-primary" id="callchat-call-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Call
+      </a>
+      <button class="btn" id="callchat-chat-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 <input type="file" id="quickpng-input" accept="image/png" class="sr-only">
 
@@ -1075,9 +1176,15 @@ function mkCompany(name, desc){
   };
 }
 
+function mkPerson(name, phone, email){
+  return { id: uid(), name: name||"", phone: phone||"", email: email||"", profileImage: null };
+}
+
 var DEFAULT_STATE = {
   updated: new Date().toISOString(),
   siteText: {},
+  siteIcon: null, // { filename, dataUrl, size, updated }
+  marketingTeam: [],
   companies: [
     mkCompany("DLI", "The parent identity uniting every brand under one system."),
     mkCompany("Count", "Software and digital product development within the group."),
@@ -1101,6 +1208,12 @@ try{
   state = window.__DLI_STATE__ || JSON.parse(JSON.stringify(DEFAULT_STATE));
 }catch(e){ state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 state.siteText = state.siteText || {};
+state.siteIcon = state.siteIcon || null;
+state.marketingTeam = (state.marketingTeam || []).map(function(p){
+  p.profileImage = p.profileImage || null;
+  p.phone = p.phone || ""; p.email = p.email || "";
+  return p;
+});
 state.companies = (state.companies || []).map(function(c){
   c.profileImage = c.profileImage || null;
   return c;
@@ -1222,6 +1335,12 @@ function loadRemoteState(cb){
   }).then(function(data){
     if(data && Array.isArray(data.companies)){
       data.siteText = data.siteText || {};
+      data.siteIcon = data.siteIcon || null;
+      data.marketingTeam = (data.marketingTeam || []).map(function(p){
+        p.profileImage = p.profileImage || null;
+        p.phone = p.phone || ""; p.email = p.email || "";
+        return p;
+      });
       state = data;
       window.__DLI_STATE__ = state;
     }
@@ -1640,6 +1759,15 @@ function applySiteText(){
     }
   });
 }
+function renderBrandIcon(){
+  var wrap = $("#brand-icon");
+  if(!wrap) return;
+  if(state.siteIcon && state.siteIcon.dataUrl){
+    wrap.innerHTML = '<img src="'+state.siteIcon.dataUrl+'" alt="Portal icon">';
+  }else{
+    wrap.innerHTML = '<span class="dot" id="brand-dot"></span>';
+  }
+}
 function setupEditableText(){
   $all("[data-editable]").forEach(function(elx){
     elx.addEventListener("keydown", function(e){
@@ -2016,6 +2144,7 @@ function setAdmin(on){
   $("#admin-signal").classList.toggle("show", on);
   setEditableMode(on);
   renderGrid();
+  renderConnectList();
   if(currentDrawerId){ renderDrawerAssets(findCompany(currentDrawerId)); }
 }
 
@@ -2180,6 +2309,218 @@ $("#quickpng-input").addEventListener("change", function(e){
 $("#open-about").addEventListener("click", function(){ openModal("#about-modal"); });
 
 /* ============================================================
+   PORTAL SETTINGS — name + icon (admin)
+============================================================ */
+var pendingPortalIcon = null;
+function renderPortalIconPreview(icon){
+  var preview = $("#pm-icon-preview");
+  var label = $("#pm-icon-label");
+  preview.innerHTML = "";
+  if(icon && icon.dataUrl){
+    label.textContent = icon.filename || "Icon selected";
+    preview.innerHTML = '<img src="'+icon.dataUrl+'" alt="Portal icon preview">';
+  }else{
+    label.textContent = "Click to choose an icon image";
+  }
+}
+$("#edit-portal-btn").addEventListener("click", function(){
+  if(!isAdmin){ toast("Enable admin mode first", "err"); return; }
+  $("#pm-name").value = (state.siteText && state.siteText.brandMark) || $("[data-editable='brandMark']").textContent.trim();
+  pendingPortalIcon = state.siteIcon ? JSON.parse(JSON.stringify(state.siteIcon)) : null;
+  $("#pm-icon-input").value = "";
+  renderPortalIconPreview(pendingPortalIcon);
+  openModal("#portal-modal");
+  setTimeout(function(){ $("#pm-name").focus(); }, 60);
+});
+$("#pm-icon-input").addEventListener("change", function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ toast("Please choose a JPG, PNG, or WebP image", "err"); e.target.value=""; return; }
+  if(f.size > 5*1024*1024){ toast("Icon image is larger than 5 MB", "err"); e.target.value=""; return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    pendingPortalIcon = { filename:f.name, dataUrl:reader.result, size:f.size, updated:new Date().toISOString() };
+    renderPortalIconPreview(pendingPortalIcon);
+  };
+  reader.onerror = function(){ toast("Could not read icon image", "err"); };
+  reader.readAsDataURL(f);
+});
+$("#portal-save-btn").addEventListener("click", function(){
+  var name = $("#pm-name").value.trim();
+  if(!name){ toast("Portal name is required", "err"); return; }
+  state.siteText.brandMark = name;
+  $("[data-editable='brandMark']").textContent = name;
+  state.siteIcon = pendingPortalIcon || null;
+  renderBrandIcon();
+  $("#portal-modal").classList.remove("open");
+  touch();
+  toast("Portal settings saved", "ok");
+});
+
+/* ============================================================
+   CONNECT — marketing team directory
+============================================================ */
+function findPerson(id){ return (state.marketingTeam||[]).filter(function(p){ return p.id===id; })[0]; }
+function initials(name){
+  var parts = (name||"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  return (parts[0][0] + (parts.length>1 ? parts[parts.length-1][0] : "")).toUpperCase();
+}
+function cleanPhoneForWa(phone){ return (phone||"").replace(/[^\d+]/g,"").replace(/^\+/,""); }
+
+var ICON_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><path d="M2 6h20v12H2z"/></svg>';
+var ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>';
+var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
+
+function renderConnectList(){
+  var wrap = $("#connect-list");
+  if(!wrap) return;
+  wrap.innerHTML = "";
+  var team = state.marketingTeam || [];
+  if(!team.length){
+    var empty = el("div", "group-empty", isAdmin ? "No one added yet — use \u201c+ Add person\u201d below." : "No contacts have been added yet.");
+    wrap.appendChild(empty);
+    return;
+  }
+  team.forEach(function(p){
+    var row = el("div", "asset-row");
+    var avatar = el("div", "asset-icon");
+    avatar.style.overflow = "hidden";
+    if(p.profileImage && p.profileImage.dataUrl){
+      avatar.innerHTML = '<img src="'+p.profileImage.dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;">';
+    }else{
+      avatar.textContent = initials(p.name);
+      avatar.style.fontFamily = "var(--font-mono)";
+      avatar.style.fontSize = "11px";
+    }
+    var meta = el("div", "asset-meta");
+    var title = el("div", "asset-title", p.name || "Unnamed");
+    var sub = el("div", "asset-sub", [p.phone, p.email].filter(Boolean).join(" · ") || "No contact details yet");
+    meta.appendChild(title); meta.appendChild(sub);
+    var actions = el("div", "asset-actions");
+    if(p.email){
+      var mailBtn = document.createElement("a");
+      mailBtn.className = "mini-btn"; mailBtn.href = "mailto:"+p.email;
+      mailBtn.title = "Email " + p.name; mailBtn.setAttribute("aria-label", "Email " + p.name);
+      mailBtn.innerHTML = ICON_MAIL;
+      actions.appendChild(mailBtn);
+    }
+    if(p.phone){
+      var phoneBtn = el("button", "mini-btn", ICON_PHONE);
+      phoneBtn.type = "button";
+      phoneBtn.title = "Call or chat with " + p.name;
+      phoneBtn.setAttribute("aria-label", "Call or chat with " + p.name);
+      phoneBtn.addEventListener("click", function(){ openCallChatModal(p); });
+      actions.appendChild(phoneBtn);
+    }
+    var editBtn = el("button", "mini-btn admin-only", ICON_EDIT);
+    editBtn.type = "button";
+    editBtn.title = "Edit " + (p.name || "person");
+    editBtn.setAttribute("aria-label", "Edit " + (p.name || "person"));
+    editBtn.addEventListener("click", function(){ openPersonModal(p.id); });
+    actions.appendChild(editBtn);
+    row.appendChild(avatar); row.appendChild(meta); row.appendChild(actions);
+    wrap.appendChild(row);
+  });
+}
+$("#open-connect").addEventListener("click", function(){ renderConnectList(); openModal("#connect-modal"); });
+
+/* ---------- call / chat choice ---------- */
+var callChatPerson = null;
+function openCallChatModal(p){
+  callChatPerson = p;
+  $("#callchat-title").textContent = p.name || "Contact";
+  $("#callchat-call-btn").href = "tel:" + (p.phone||"").replace(/\s+/g,"");
+  openModal("#callchat-modal");
+}
+$("#callchat-call-btn").addEventListener("click", function(){
+  setTimeout(function(){ $("#callchat-modal").classList.remove("open"); }, 200);
+});
+$("#callchat-chat-btn").addEventListener("click", function(){
+  if(!callChatPerson) return;
+  var num = cleanPhoneForWa(callChatPerson.phone);
+  if(!num){ toast("No phone number on file", "err"); return; }
+  window.open("https://wa.me/" + num, "_blank", "noopener");
+  $("#callchat-modal").classList.remove("open");
+});
+
+/* ---------- add / edit / delete person (admin) ---------- */
+var personModalMode = "add";
+var personModalId = null;
+var pendingPersonProfile = null;
+function renderPersonProfilePreview(profile){
+  var preview = $("#pn-profile-preview");
+  var label = $("#pn-profile-label");
+  preview.innerHTML = "";
+  if(profile && profile.dataUrl){
+    label.textContent = profile.filename || "Profile image selected";
+    preview.innerHTML = '<img src="'+profile.dataUrl+'" alt="Profile preview">';
+  }else{
+    label.textContent = "Click to choose an image (JPG, PNG, WebP)";
+  }
+}
+function openPersonModal(id){
+  if(!isAdmin){ toast("Enable admin mode first", "err"); return; }
+  personModalId = id || null;
+  personModalMode = id ? "edit" : "add";
+  $("#person-modal-title").textContent = id ? "Edit person" : "Add person";
+  if(id){
+    var p = findPerson(id);
+    $("#pn-name").value = p.name || "";
+    $("#pn-phone").value = p.phone || "";
+    $("#pn-email").value = p.email || "";
+    pendingPersonProfile = p.profileImage ? JSON.parse(JSON.stringify(p.profileImage)) : null;
+  }else{
+    $("#pn-name").value = ""; $("#pn-phone").value = ""; $("#pn-email").value = "";
+    pendingPersonProfile = null;
+  }
+  $("#pn-profile-input").value = "";
+  renderPersonProfilePreview(pendingPersonProfile);
+  $("#person-delete-btn").style.display = id ? "" : "none";
+  openModal("#person-modal");
+  setTimeout(function(){ $("#pn-name").focus(); }, 60);
+}
+$("#connect-add-person").addEventListener("click", function(){ openPersonModal(null); });
+$("#pn-profile-input").addEventListener("change", function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ toast("Please choose a JPG, PNG, or WebP image", "err"); e.target.value=""; return; }
+  if(f.size > 5*1024*1024){ toast("Profile image is larger than 5 MB", "err"); e.target.value=""; return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    pendingPersonProfile = { filename:f.name, dataUrl:reader.result, size:f.size, updated:new Date().toISOString() };
+    renderPersonProfilePreview(pendingPersonProfile);
+  };
+  reader.onerror = function(){ toast("Could not read profile image", "err"); };
+  reader.readAsDataURL(f);
+});
+$("#person-save-btn").addEventListener("click", function(){
+  var name = $("#pn-name").value.trim();
+  if(!name){ toast("Name is required", "err"); return; }
+  var phone = $("#pn-phone").value.trim();
+  var email = $("#pn-email").value.trim();
+  if(personModalMode==="edit" && personModalId){
+    var p = findPerson(personModalId);
+    if(p){ p.name=name; p.phone=phone; p.email=email; p.profileImage = pendingPersonProfile || null; }
+  }else{
+    var np = mkPerson(name, phone, email);
+    np.profileImage = pendingPersonProfile || null;
+    state.marketingTeam = state.marketingTeam || [];
+    state.marketingTeam.push(np);
+  }
+  $("#person-modal").classList.remove("open");
+  renderConnectList(); touch();
+  toast("Contact saved", "ok");
+});
+$("#person-delete-btn").addEventListener("click", function(){
+  if(!personModalId) return;
+  state.marketingTeam = (state.marketingTeam||[]).filter(function(p){ return p.id!==personModalId; });
+  $("#person-modal").classList.remove("open");
+  renderConnectList(); touch();
+  toast("Contact removed", "ok");
+});
+
+/* ============================================================
    PERSISTENCE — export / import JSON
 ============================================================ */
 $("#export-btn").addEventListener("click", function(){
@@ -2201,6 +2542,12 @@ $("#import-input").addEventListener("change", function(e){
       var data = JSON.parse(reader.result);
       if(!data || !Array.isArray(data.companies)) throw new Error("bad shape");
       data.siteText = data.siteText || {};
+      data.siteIcon = data.siteIcon || null;
+      data.marketingTeam = (data.marketingTeam || []).map(function(p){
+        p.profileImage = p.profileImage || null;
+        p.phone = p.phone || ""; p.email = p.email || "";
+        return p;
+      });
       state = data;
       window.__DLI_STATE__ = state;
       renderAll();
@@ -2227,8 +2574,10 @@ function tick(){
 function renderAll(){
   renderFooterMeta();
   applySiteText();
+  renderBrandIcon();
   renderUniverseTags();
   renderGrid();
+  renderConnectList();
   observeReveals();
 }
 
@@ -2248,7 +2597,7 @@ function applyTheme(theme){
   btn.setAttribute("title", label);
 }
 function setupTheme(){
-  applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  applyTheme(document.documentElement.getAttribute("data-theme") || "dark");
   $("#theme-toggle").addEventListener("click", function(){
     var current = document.documentElement.getAttribute("data-theme") || "light";
     applyTheme(current === "light" ? "dark" : "light");
@@ -2262,11 +2611,35 @@ function restoreAdminSession(){
   }catch(e){}
 }
 
+/* ============================================================
+   MOUSE TRACKING GLOW — landing (hero) screen only
+============================================================ */
+function setupMouseGlow(){
+  var glow = $("#mouse-glow");
+  var stage = $("#hero-stage");
+  if(!glow || !stage || reduceMotion) return;
+  var raf = null, nx = 0, ny = 0;
+  function apply(){
+    glow.style.setProperty("--mx", nx + "px");
+    glow.style.setProperty("--my", ny + "px");
+    raf = null;
+  }
+  stage.addEventListener("mousemove", function(e){
+    var r = stage.getBoundingClientRect();
+    nx = e.clientX - r.left;
+    ny = e.clientY - r.top;
+    if(!raf) raf = requestAnimationFrame(apply);
+  }, { passive:true });
+  stage.addEventListener("mouseenter", function(){ glow.classList.add("show"); });
+  stage.addEventListener("mouseleave", function(){ glow.classList.remove("show"); });
+}
+
 function init(){
   restoreAdminSession();
   renderAll();
   setupEditableText();
   setupTheme();
+  setupMouseGlow();
   var ok = reduceMotion ? false : initScene();
 
   if(ok){
