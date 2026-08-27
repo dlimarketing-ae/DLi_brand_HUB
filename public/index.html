@@ -570,6 +570,20 @@ body.admin-mode #admin-corner:focus-within #admin-toggle{ opacity:1; }
 body.admin-mode .admin-only{ display:flex; }
 body.admin-mode .admin-only.block{ display:block; }
 
+#save-status{
+  position:fixed; top:54px; left:50%; transform:translateX(-50%);
+  z-index:200; font-family:var(--font-mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; padding:5px 13px; border-radius:100px;
+  display:none; align-items:center; gap:6px; backdrop-filter:blur(8px);
+  border:1px solid var(--line-strong); background:var(--panel-strong); color:var(--ink-dim);
+  opacity:0; transition:opacity .25s var(--ease);
+}
+#save-status.show{ display:inline-flex; opacity:1; }
+#save-status.pending{ color:var(--ink-dim); border-color:var(--line-strong); }
+#save-status.saving{ color:var(--accent); border-color:var(--accent-dim); }
+#save-status.saved{ color:#3fa66b; border-color:rgba(63,166,107,.35); }
+#save-status.error{ color:#ff8a70; border-color:rgba(255,90,60,.4); }
+
 .admin-card-controls{
   position:absolute; top:14px; right:14px; z-index:3; gap:6px; display:flex;
   transform:translateZ(46px);
@@ -701,6 +715,7 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   <span class="pulse"></span> Admin mode
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
 </button>
+<div id="save-status" aria-live="polite"></div>
 
 <header id="topbar">
   <a class="brand-mark" href="#hero"><span class="dot"></span><span data-editable="brandMark">DLI BRAND HUB</span></a>
@@ -1041,28 +1056,72 @@ function touch(){ state.updated = new Date().toISOString(); renderFooterMeta(); 
    works locally in-memory for the current tab, same as before.
 ============================================================ */
 var saveTimer = null;
+var saveInFlight = false;
+var saveDirty = false;
+var saveRetryTimer = null;
+
 function scheduleSave(){
   if(!isAdmin || !adminToken) return;
+  saveDirty = true;
+  updateSaveStatus("pending");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveRemoteState, 700);
 }
+
 function saveRemoteState(){
+  if(!isAdmin || !adminToken){ saveDirty = false; return; }
+  clearTimeout(saveRetryTimer);
+  saveInFlight = true;
+  updateSaveStatus("saving");
+  var payload = JSON.stringify(state);
+
   fetch(API_BASE + "/api/state", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": "Bearer " + adminToken },
-    body: JSON.stringify(state)
+    body: payload
   }).then(function(r){
+    saveInFlight = false;
     if(r.status === 401){
       setAdmin(false);
       toast("Session expired — log in again", "err");
+      updateSaveStatus("error");
       return;
     }
-    if(!r.ok){ toast("Could not save changes to the server", "err"); return; }
-    toast("Saved", "ok");
+    if(!r.ok){
+      updateSaveStatus("error");
+      toast("Could not save changes — will retry", "err");
+      saveRetryTimer = setTimeout(saveRemoteState, 4000);
+      return;
+    }
+    saveDirty = false;
+    updateSaveStatus("saved");
   }).catch(function(){
-    toast("Could not reach the server to save", "err");
+    saveInFlight = false;
+    updateSaveStatus("error");
+    toast("Could not reach the server — will retry", "err");
+    saveRetryTimer = setTimeout(saveRemoteState, 4000);
   });
 }
+
+function updateSaveStatus(state_){
+  var el = $("#save-status");
+  if(!el) return;
+  el.classList.remove("pending", "saving", "saved", "error");
+  el.classList.add(state_);
+  if(state_ === "pending"){ el.textContent = "Unsaved changes…"; el.classList.add("show"); }
+  if(state_ === "saving"){ el.textContent = "Saving…"; el.classList.add("show"); }
+  if(state_ === "saved"){ el.textContent = "All changes saved"; el.classList.add("show"); setTimeout(function(){ if(!saveDirty && !saveInFlight) el.classList.remove("show"); }, 1800); }
+  if(state_ === "error"){ el.textContent = "Save failed — retrying…"; el.classList.add("show"); }
+}
+
+window.addEventListener("beforeunload", function(e){
+  if(saveInFlight || saveDirty){
+    e.preventDefault();
+    e.returnValue = "";
+    return "";
+  }
+});
+
 function loadRemoteState(cb){
   fetch(API_BASE + "/api/state").then(function(r){
     if(!r.ok) throw new Error("no state");
@@ -1088,6 +1147,7 @@ function verifyPasscode(pass){
     setAdmin(true);
     $("#admin-modal").classList.remove("open");
     toast("Admin mode enabled", "ok");
+    if(saveDirty) saveRemoteState(); // push any changes made before a session expired
   }).catch(function(){
     toast("Incorrect passcode", "err");
   });
@@ -1820,6 +1880,10 @@ $("#admin-submit").addEventListener("click", function(){
 });
 $("#admin-pass").addEventListener("keydown", function(e){ if(e.key==="Enter") $("#admin-submit").click(); });
 $("#admin-signal").addEventListener("click", function(){
+  if(saveDirty || saveInFlight){
+    toast("Still saving — wait a moment before exiting admin mode", "err");
+    return;
+  }
   setAdmin(false);
   toast("Exited admin mode", "ok");
 });
@@ -1829,7 +1893,15 @@ var ICON_UNLOCKED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 
 function setAdmin(on){
   isAdmin = on;
-  if(!on){ adminToken = null; try{ sessionStorage.removeItem("dli_admin_token"); }catch(e){} }
+  if(!on){
+    adminToken = null;
+    try{ sessionStorage.removeItem("dli_admin_token"); }catch(e){}
+    clearTimeout(saveTimer);
+    clearTimeout(saveRetryTimer);
+    saveInFlight = false;
+    var statusEl = $("#save-status");
+    if(statusEl && !saveDirty) statusEl.classList.remove("show");
+  }
   document.body.classList.toggle("admin-mode", on);
   $("#admin-toggle").classList.toggle("on", on);
   $("#admin-toggle").setAttribute("aria-pressed", on ? "true":"false");
