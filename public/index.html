@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 /* ============================================================
@@ -39,7 +39,7 @@
 
   --font-display:  'Archivo', sans-serif;
   --font-body:     'Inter', sans-serif;
-  --font-mono:     'JetBrains Mono', monospace;
+  --font-mono:     'Poppins', sans-serif;
 
   --ease:          cubic-bezier(.16,.84,.24,1);
   --ease-soft:     cubic-bezier(.22,.61,.36,1);
@@ -427,6 +427,12 @@ main{ position:relative; z-index:2; }
   font-family:var(--font-display); font-weight:800; font-size:17px; background:var(--bg-1);
   transform:translateZ(38px);
 }
+.card-logo.profile-image{
+  overflow:hidden; padding:0;
+}
+.card-logo.profile-image img{
+  width:100%; height:100%; object-fit:cover; border-radius:inherit;
+}
 .card-name{
   font-family:var(--font-display); font-weight:800; font-size:23px; margin:0 0 8px;
   letter-spacing:-.01em; transform:translateZ(32px);
@@ -472,6 +478,12 @@ main{ position:relative; z-index:2; }
   width:64px; height:64px; border-radius:16px; border:1px solid var(--line-strong);
   display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
   font-weight:800; font-size:22px; margin-bottom:20px; background:var(--bg-2);
+}
+.drawer-logo-lg.profile-image{
+  overflow:hidden; padding:0;
+}
+.drawer-logo-lg.profile-image img{
+  width:100%; height:100%; object-fit:cover; border-radius:inherit;
 }
 .drawer-desc{ color:var(--ink-dim); line-height:1.65; margin:16px 0 30px; max-width:460px; }
 
@@ -630,6 +642,13 @@ body.admin-mode .admin-only.block{ display:block; }
 }
 .file-drop:hover{ border-color:var(--accent-dim); }
 .file-drop input{ display:none; }
+
+.company-profile-preview{
+  margin-top:10px; display:flex; align-items:center; min-height:0;
+}
+.company-profile-preview img{
+  width:72px; height:72px; object-fit:cover; border-radius:14px; border:1px solid var(--line-strong);
+}
 
 .type-toggle{ display:flex; gap:8px; }
 .type-toggle button{
@@ -890,6 +909,15 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
     <h3 id="company-modal-title">Add company</h3>
     <div class="field"><label for="cm-name">Company name</label><input type="text" id="cm-name"></div>
     <div class="field"><label for="cm-desc">Description</label><textarea id="cm-desc"></textarea></div>
+    <div class="field">
+      <label>Company profile picture / thumbnail</label>
+      <label class="file-drop" id="company-profile-drop">
+        <span id="company-profile-label">Click to choose an image (JPG, PNG, WebP)</span>
+        <input type="file" id="cm-profile" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="company-profile-preview" class="company-profile-preview" aria-live="polite"></div>
+      <div class="field-hint">This image is used as the company's card thumbnail and profile image. Maximum 5 MB.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn" data-close-modal>Cancel</button>
       <button class="btn btn-primary" id="company-save-btn">Save company</button>
@@ -981,6 +1009,7 @@ function mkCompany(name, desc){
     id: uid(),
     name: name,
     description: desc || "",
+    profileImage: null, // { filename, dataUrl, size, updated }
     quickPng: null, // { filename, dataUrl, size, updated }
     groups: DEFAULT_GROUPS.map(mkGroup)
   };
@@ -1012,6 +1041,10 @@ try{
   state = window.__DLI_STATE__ || JSON.parse(JSON.stringify(DEFAULT_STATE));
 }catch(e){ state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 state.siteText = state.siteText || {};
+state.companies = (state.companies || []).map(function(c){
+  c.profileImage = c.profileImage || null;
+  return c;
+});
 window.__DLI_STATE__ = state;
 
 var isAdmin = false;
@@ -1608,8 +1641,12 @@ function renderGrid(){
     card.setAttribute("role","listitem");
     card.setAttribute("tabindex","0");
     card.dataset.id = c.id;
+    var profileMarkup = (c.profileImage && c.profileImage.dataUrl)
+      ? '<img src="'+c.profileImage.dataUrl+'" alt="" loading="lazy">'
+      : initials(c.name);
+    var profileClass = (c.profileImage && c.profileImage.dataUrl) ? ' profile-image' : '';
     card.innerHTML =
-      '<div class="cl card-logo">'+initials(c.name)+'</div>'+
+      '<div class="cl card-logo'+profileClass+'">'+profileMarkup+'</div>'+
       '<h3 class="cl card-name">'+escapeHtml(c.name)+'</h3>'+
       '<div class="cl card-foot"><span class="card-assets">'+uploaded+' file'+(uploaded===1?'':'s')+'</span>'+
       '<span class="card-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>';
@@ -1654,7 +1691,14 @@ function openDrawer(id){
   var c = findCompany(id);
   if(!c) return;
   currentDrawerId = id;
-  $("#drawer-logo").textContent = initials(c.name);
+  var drawerLogo = $("#drawer-logo");
+  if(c.profileImage && c.profileImage.dataUrl){
+    drawerLogo.classList.add("profile-image");
+    drawerLogo.innerHTML = '<img src="'+c.profileImage.dataUrl+'" alt="">';
+  }else{
+    drawerLogo.classList.remove("profile-image");
+    drawerLogo.textContent = initials(c.name);
+  }
   $("#drawer-name").textContent = c.name;
   $("#drawer-desc").textContent = c.description || "";
   renderDrawerAssets(c);
@@ -1916,6 +1960,18 @@ function setAdmin(on){
 /* ---------- company modal (add/edit) ---------- */
 var companyModalMode = "add";
 var companyModalId = null;
+var pendingCompanyProfile = null;
+function renderCompanyProfilePreview(profile){
+  var preview = $("#company-profile-preview");
+  var label = $("#company-profile-label");
+  preview.innerHTML = "";
+  if(profile && profile.dataUrl){
+    label.textContent = profile.filename || "Profile image selected";
+    preview.innerHTML = '<img src="'+profile.dataUrl+'" alt="Company profile preview">';
+  }else{
+    label.textContent = "Click to choose an image (JPG, PNG, WebP)";
+  }
+}
 function openCompanyModal(id){
   if(!isAdmin){ toast("Enable admin mode first", "err"); return; }
   companyModalId = id || null;
@@ -1925,9 +1981,13 @@ function openCompanyModal(id){
     var c = findCompany(id);
     $("#cm-name").value = c.name;
     $("#cm-desc").value = c.description||"";
+    pendingCompanyProfile = c.profileImage ? JSON.parse(JSON.stringify(c.profileImage)) : null;
   }else{
     $("#cm-name").value = ""; $("#cm-desc").value="";
+    pendingCompanyProfile = null;
   }
+  $("#cm-profile").value = "";
+  renderCompanyProfilePreview(pendingCompanyProfile);
   openModal("#company-modal");
   setTimeout(function(){ $("#cm-name").focus(); }, 60);
 }
@@ -1938,15 +1998,32 @@ $("#company-save-btn").addEventListener("click", function(){
   if(companyModalMode==="edit" && companyModalId){
     var c = findCompany(companyModalId);
     c.name = name; c.description = $("#cm-desc").value.trim();
+    c.profileImage = pendingCompanyProfile || null;
     if(currentDrawerId===c.id) openDrawer(c.id);
   }else{
     var nc = mkCompany(name, $("#cm-desc").value.trim());
+    nc.profileImage = pendingCompanyProfile || null;
     state.companies.push(nc);
   }
   $("#company-modal").classList.remove("open");
   renderAll();
   touch();
   toast("Company saved", "ok");
+});
+
+/* ---------- company profile image ---------- */
+$("#cm-profile").addEventListener("change", function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ toast("Please choose a JPG, PNG, or WebP image", "err"); e.target.value=""; return; }
+  if(f.size > 5*1024*1024){ toast("Profile image is larger than 5 MB", "err"); e.target.value=""; return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    pendingCompanyProfile = { filename:f.name, dataUrl:reader.result, size:f.size, updated:new Date().toISOString() };
+    renderCompanyProfilePreview(pendingCompanyProfile);
+  };
+  reader.onerror = function(){ toast("Could not read profile image", "err"); };
+  reader.readAsDataURL(f);
 });
 
 /* ---------- group (category) modal ---------- */
