@@ -45,6 +45,7 @@
   --ease-soft:     cubic-bezier(.22,.61,.36,1);
 
   --rail-w: 2px;
+  --icon-scale: 1;
 }
 
 [data-theme="dark"]{
@@ -113,13 +114,15 @@ img{ max-width:100%; display:block; }
 html.scene-loading main,
 html.scene-loading #topbar,
 html.scene-loading #progress-rail,
-html.scene-loading #progress-ticks{
+html.scene-loading #progress-ticks,
+html.scene-loading #scroll-speed{
   visibility:hidden !important;
 }
 html.scene-loaded main,
 html.scene-loaded #topbar,
 html.scene-loaded #progress-rail,
-html.scene-loaded #progress-ticks{
+html.scene-loaded #progress-ticks,
+html.scene-loaded #scroll-speed{
   visibility:visible;
 }
 
@@ -163,6 +166,29 @@ main{ position:relative; z-index:2; }
 #progress-ticks .tick.active::before{ background:var(--accent); width:22px; }
 @media (max-width: 860px){ #progress-ticks{ display:none; } }
 
+/* ---------- scroll speed widget ---------- */
+#scroll-speed{
+  position:fixed; left:18px; top:50%; transform:translateY(-50%);
+  z-index:70; display:flex; flex-direction:column; align-items:center; gap:12px;
+  pointer-events:none;
+}
+.scroll-speed-track{
+  width:3px; height:120px; border-radius:100px; background:var(--line-strong);
+  position:relative; overflow:hidden;
+}
+.scroll-speed-fill{
+  position:absolute; left:0; right:0; bottom:0; width:100%; height:0%;
+  background:var(--accent); border-radius:100px;
+  transition:height .15s var(--ease), background .3s var(--ease);
+}
+.scroll-speed-msg{
+  writing-mode:vertical-rl; text-orientation:mixed;
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); opacity:0; transition:opacity .35s var(--ease); white-space:nowrap;
+}
+.scroll-speed-msg.show{ opacity:1; }
+@media (max-width: 860px){ #scroll-speed{ display:none; } }
+
 /* ---------- topbar ---------- */
 #topbar{
   position:fixed; top:0; left:0; right:0; z-index:75;
@@ -180,13 +206,42 @@ main{ position:relative; z-index:2; }
 .brand-mark .dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); }
 .brand-icon{ display:flex; align-items:center; justify-content:center; flex:none; }
 .brand-icon img{
-  width:22px; height:22px; border-radius:7px; object-fit:cover;
+  width:calc(22px * var(--icon-scale,1)); height:calc(22px * var(--icon-scale,1));
+  border-radius:7px; object-fit:cover;
   border:1px solid var(--line-strong);
+  transition:width .12s var(--ease), height .12s var(--ease);
 }
 #edit-portal-btn{ width:28px; height:28px; padding:0; opacity:.6; }
 #edit-portal-btn:hover{ opacity:1; }
 
+.icon-scale-row{ display:flex; align-items:center; gap:16px; }
+.icon-scale-row input[type=range]{
+  flex:1; appearance:none; height:4px; border-radius:100px; background:var(--line-strong); outline:none;
+}
+.icon-scale-row input[type=range]::-webkit-slider-thumb{
+  appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent);
+  border:2px solid var(--bg-1); box-shadow:0 0 0 1px var(--accent-dim); cursor:pointer;
+}
+.icon-scale-row input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--accent); border:2px solid var(--bg-1);
+  box-shadow:0 0 0 1px var(--accent-dim); cursor:pointer;
+}
+.icon-scale-preview{
+  flex:none; width:44px; height:44px; border-radius:12px; border:1px dashed var(--line-strong);
+  display:flex; align-items:center; justify-content:center; background:var(--bg-2);
+}
+.icon-scale-preview img{ width:22px; height:22px; border-radius:7px; object-fit:cover; }
+.icon-scale-preview .dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); }
+
 #topbar-actions{ display:flex; align-items:center; gap:10px; }
+
+#open-search{
+  opacity:0; transform:translateY(-6px); pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease);
+}
+body.scrolled #open-search{
+  opacity:1; transform:none; pointer-events:auto;
+}
 
 .btn{
   appearance:none; border:1px solid var(--line-strong); background:var(--panel);
@@ -211,12 +266,26 @@ main{ position:relative; z-index:2; }
 /* ============================================================
    HERO
    ============================================================ */
-#hero{ position:relative; height:230vh; }
+#hero{ position:relative; height:180vh; }
 #hero-stage{
   position:sticky; top:0; height:100svh; min-height:560px;
   display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
+  overflow:hidden; cursor:pointer;
 }
+@media (hover:hover) and (pointer:fine){
+  #hero-stage.hide-native-cursor{ cursor:none; }
+}
+#cursor-label{
+  position:fixed; z-index:50; left:0; top:0; pointer-events:none;
+  transform:translate(-50%,-50%); will-change:transform;
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--bg-1); background:var(--accent); padding:9px 16px; border-radius:100px;
+  box-shadow:0 8px 24px -6px var(--accent-glow);
+  opacity:0; transition:opacity .25s var(--ease), transform .06s linear;
+  white-space:nowrap;
+}
+#cursor-label.show{ opacity:1; }
+@media (hover:none), (pointer:coarse){ #cursor-label{ display:none !important; } }
 #mouse-glow{
   position:absolute; inset:0; z-index:1; pointer-events:none;
   background:radial-gradient(560px circle at var(--mx,50%) var(--my,40%), var(--accent-glow), transparent 62%);
@@ -283,6 +352,13 @@ html.scene-loading #hero-copy{ visibility:hidden !important; }
   color:var(--ink);
 }
 .modal-glass h3{ font-size:26px; }
+.about-head-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.about-head-row h3{ margin:0; }
+#about-logo-wrap{ margin:14px 0 6px; }
+#about-logo-wrap img{
+  max-width:120px; max-height:120px; border-radius:12px; border:1px solid var(--glass-border);
+  object-fit:contain; background:var(--bg-2);
+}
 .about-body p{ color:var(--ink-dim); line-height:1.75; font-size:14.5px; margin:0 0 16px; }
 .about-body p:last-child{ margin-bottom:0; }
 .about-body strong{ color:var(--ink); font-weight:600; }
@@ -807,10 +883,15 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 
 <div id="progress-rail" aria-hidden="true"><div id="progress-fill"></div></div>
 <div id="progress-ticks" aria-hidden="true">
-  <div class="tick" data-tick="hero">Arrival</div>
-  <div class="tick" data-tick="universe">Universe</div>
+  <div class="tick" data-tick="hero">Home</div>
+  <div class="tick" data-tick="universe">Our Brands</div>
   <div class="tick" data-tick="library">Library</div>
   <div class="tick" data-tick="footer">Close</div>
+</div>
+
+<div id="scroll-speed" aria-hidden="true">
+  <div class="scroll-speed-track"><div class="scroll-speed-fill" id="scroll-speed-fill"></div></div>
+  <div class="scroll-speed-msg" id="scroll-speed-msg"></div>
 </div>
 
 <button id="admin-signal" type="button" title="Exit admin mode" aria-label="Exit admin mode">
@@ -851,6 +932,7 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   <section id="hero" data-scene="hero">
     <div id="hero-stage">
       <div id="mouse-glow" aria-hidden="true"></div>
+      <div id="cursor-label" aria-hidden="true">Click to search</div>
       <div id="hero-copy">
         <p class="hero-eyebrow" id="hero-eyebrow" data-editable="heroEyebrow">The DLI Group</p>
         <h1 class="hero-title" id="hero-title" aria-label="DLI Brand Hub">
@@ -873,7 +955,7 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
   ============================================================ -->
   <section id="universe" data-scene="universe">
     <div id="universe-stage">
-      <div id="universe-heading">
+      <div id="universe-heading" class="reveal">
         <span class="eyebrow" data-editable="universeEyebrow">Brand universe</span>
         <h2><span data-editable="universeHeadingLine1">Seven brands.</span><br><span data-editable="universeHeadingLine2">One system.</span></h2>
       </div>
@@ -1053,15 +1135,41 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
 
 <div class="modal-overlay" id="about-modal">
   <div class="modal modal-glass">
-    <h3>About the Group</h3>
-    <div class="about-body">
-      <p>Dubai Limited Investment LLC is a diversified UAE-based business group with a growing portfolio of companies delivering specialized products and services across multiple sectors. Built on a commitment to quality, reliability, and long-term value, the group continues to expand its capabilities and strengthen its presence across the UAE.</p>
-      <p>As part of the group, High Power Signature LLC provides integrated solutions across Construction, Facility Management, Interior Design, Data Center Services, Manpower Supply, and Landscaping. The company combines technical expertise, experienced professionals, modern practices, and a strong focus on service quality to meet the evolving needs of clients across commercial, residential, industrial, and public-sector environments.</p>
-      <p>High Power Signature delivers dependable, end-to-end solutions designed to meet diverse project and operational requirements while maintaining high standards of quality, safety, efficiency, and professionalism.</p>
-      <p>Backed by the strategic support and resources of Dubai Limited Investment LLC, High Power Signature is committed to delivering quality, efficiency, innovation, and reliability in every project — building lasting relationships and creating sustainable value for clients and communities across the UAE.</p>
+    <div class="about-head-row">
+      <h3 id="about-modal-heading">About the Group</h3>
+      <button class="btn btn-icon admin-only" id="edit-about-btn" aria-label="Edit About the Group section" title="Edit About the Group section">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+      </button>
     </div>
+    <div id="about-logo-wrap"></div>
+    <div class="about-body" id="about-body"></div>
     <div class="modal-actions">
       <button class="btn btn-primary" data-close-modal>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="about-edit-modal">
+  <div class="modal">
+    <h3>Edit About the Group</h3>
+    <div class="field"><label for="ae-title">Section title</label><input type="text" id="ae-title"></div>
+    <div class="field">
+      <label>Group logo</label>
+      <label class="file-drop" id="ae-logo-drop">
+        <span id="ae-logo-label">Click to choose a logo image</span>
+        <input type="file" id="ae-logo-input" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="ae-logo-preview" class="company-profile-preview" aria-live="polite"></div>
+      <div class="field-hint">Shown at the top of the About the Group panel. Maximum 5 MB.</div>
+    </div>
+    <div class="field">
+      <label for="ae-text">About text</label>
+      <textarea id="ae-text" style="min-height:220px;"></textarea>
+      <div class="field-hint">Leave a blank line between paragraphs.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn btn-primary" id="about-save-btn">Save</button>
     </div>
   </div>
 </div>
@@ -1082,8 +1190,16 @@ body.admin-mode #persist-bar.admin-only{ display:flex; }
       <div id="pm-icon-preview" class="company-profile-preview" aria-live="polite"></div>
       <div class="field-hint">Shown in the header next to the portal name. Maximum 5 MB.</div>
     </div>
+    <div class="field">
+      <label for="pm-icon-scale">Icon size — live preview <span id="pm-icon-scale-val">100%</span></label>
+      <div class="icon-scale-row">
+        <input type="range" id="pm-icon-scale" min="50" max="220" step="5" value="100">
+        <div class="icon-scale-preview" id="pm-icon-scale-preview" aria-hidden="true"></div>
+      </div>
+      <div class="field-hint">Drag to resize the header icon — the header updates as you move the slider.</div>
+    </div>
     <div class="modal-actions">
-      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn" id="portal-cancel-btn">Cancel</button>
       <button class="btn btn-primary" id="portal-save-btn">Save</button>
     </div>
   </div>
@@ -1180,11 +1296,22 @@ function mkPerson(name, phone, email){
   return { id: uid(), name: name||"", phone: phone||"", email: email||"", profileImage: null };
 }
 
+var DEFAULT_ABOUT_TEXT = [
+  "Dubai Limited Investment LLC is a diversified UAE-based business group with a growing portfolio of companies delivering specialized products and services across multiple sectors. Built on a commitment to quality, reliability, and long-term value, the group continues to expand its capabilities and strengthen its presence across the UAE.",
+  "As part of the group, High Power Signature LLC provides integrated solutions across Construction, Facility Management, Interior Design, Data Center Services, Manpower Supply, and Landscaping. The company combines technical expertise, experienced professionals, modern practices, and a strong focus on service quality to meet the evolving needs of clients across commercial, residential, industrial, and public-sector environments.",
+  "High Power Signature delivers dependable, end-to-end solutions designed to meet diverse project and operational requirements while maintaining high standards of quality, safety, efficiency, and professionalism.",
+  "Backed by the strategic support and resources of Dubai Limited Investment LLC, High Power Signature is committed to delivering quality, efficiency, innovation, and reliability in every project — building lasting relationships and creating sustainable value for clients and communities across the UAE."
+];
+
 var DEFAULT_STATE = {
   updated: new Date().toISOString(),
   siteText: {},
   siteIcon: null, // { filename, dataUrl, size, updated }
+  siteIconScale: 1,
   marketingTeam: [],
+  aboutTitle: "About the Group",
+  aboutText: DEFAULT_ABOUT_TEXT.slice(),
+  groupLogo: null, // { filename, dataUrl, size, updated }
   companies: [
     mkCompany("DLI", "The parent identity uniting every brand under one system."),
     mkCompany("Count", "Software and digital product development within the group."),
@@ -1209,11 +1336,15 @@ try{
 }catch(e){ state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 state.siteText = state.siteText || {};
 state.siteIcon = state.siteIcon || null;
+state.siteIconScale = state.siteIconScale || 1;
 state.marketingTeam = (state.marketingTeam || []).map(function(p){
   p.profileImage = p.profileImage || null;
   p.phone = p.phone || ""; p.email = p.email || "";
   return p;
 });
+state.aboutTitle = state.aboutTitle || "About the Group";
+state.aboutText = (state.aboutText && state.aboutText.length) ? state.aboutText : DEFAULT_ABOUT_TEXT.slice();
+state.groupLogo = state.groupLogo || null;
 state.companies = (state.companies || []).map(function(c){
   c.profileImage = c.profileImage || null;
   return c;
@@ -1336,11 +1467,15 @@ function loadRemoteState(cb){
     if(data && Array.isArray(data.companies)){
       data.siteText = data.siteText || {};
       data.siteIcon = data.siteIcon || null;
+      data.siteIconScale = data.siteIconScale || 1;
       data.marketingTeam = (data.marketingTeam || []).map(function(p){
         p.profileImage = p.profileImage || null;
         p.phone = p.phone || ""; p.email = p.email || "";
         return p;
       });
+      data.aboutTitle = data.aboutTitle || "About the Group";
+      data.aboutText = (data.aboutText && data.aboutText.length) ? data.aboutText : DEFAULT_ABOUT_TEXT.slice();
+      data.groupLogo = data.groupLogo || null;
       state = data;
       window.__DLI_STATE__ = state;
     }
@@ -1395,6 +1530,7 @@ var sceneEls = $all("[data-scene]");
 function updateChrome(){
   globalProgress = window.scrollY / docH;
   $("#progress-fill").style.width = (globalProgress*100).toFixed(2) + "%";
+  document.body.classList.toggle("scrolled", window.scrollY > 10);
 
   var active = "hero";
   sceneEls.forEach(function(s){
@@ -1435,7 +1571,7 @@ function updateHero(){
   scrollCue.style.opacity = p < 0.06 ? 1 : Math.max(0, 1-p*3);
   scrollCue.style.setProperty("--cue", Math.min(100, p*260) + "%");
 
-  var exitP = Math.min(1, Math.max(0, (p-0.7)/0.3));
+  var exitP = Math.min(1, Math.max(0, (p-0.62)/0.38));
   $("#hero-copy").style.opacity = 1-exitP;
   $("#hero-copy").style.transform = "translateY(" + (-40*exitP) + "px) scale(" + (1-exitP*0.05) + ")";
 
@@ -1761,11 +1897,12 @@ function applySiteText(){
 }
 function renderBrandIcon(){
   var wrap = $("#brand-icon");
+  document.documentElement.style.setProperty("--icon-scale", state.siteIconScale || 1);
   if(!wrap) return;
   if(state.siteIcon && state.siteIcon.dataUrl){
     wrap.innerHTML = '<img src="'+state.siteIcon.dataUrl+'" alt="Portal icon">';
   }else{
-    wrap.innerHTML = '<span class="dot" id="brand-dot"></span>';
+    wrap.innerHTML = '<span class="dot"></span>';
   }
 }
 function setupEditableText(){
@@ -2081,6 +2218,15 @@ $("#open-search").addEventListener("click", openSearch);
 $("#open-search-2").addEventListener("click", openSearch);
 $("#search-close").addEventListener("click", closeSearch);
 $("#search-overlay").addEventListener("click", function(e){ if(e.target.id==="search-overlay") closeSearch(); });
+
+/* clicking the empty landing background opens search directly — no cursor label needed */
+(function(){
+  var stage = $("#hero-stage");
+  if(!stage) return;
+  stage.addEventListener("click", function(e){
+    if(e.target === stage || e.target.id === "mouse-glow"){ openSearch(); }
+  });
+})();
 $("#search-input").addEventListener("input", function(e){ renderSearchResults(e.target.value); searchQuery=e.target.value; renderGrid(); });
 
 /* ============================================================
@@ -2306,12 +2452,81 @@ $("#quickpng-input").addEventListener("change", function(e){
 });
 
 /* ---------- about the group ---------- */
-$("#open-about").addEventListener("click", function(){ openModal("#about-modal"); });
+function renderAbout(){
+  $("#about-modal-heading").textContent = state.aboutTitle || "About the Group";
+  var logoWrap = $("#about-logo-wrap");
+  logoWrap.innerHTML = "";
+  if(state.groupLogo && state.groupLogo.dataUrl){
+    var img = document.createElement("img");
+    img.src = state.groupLogo.dataUrl;
+    img.alt = "Group logo";
+    logoWrap.appendChild(img);
+  }
+  var body = $("#about-body");
+  body.innerHTML = "";
+  (state.aboutText && state.aboutText.length ? state.aboutText : DEFAULT_ABOUT_TEXT).forEach(function(para){
+    var p = document.createElement("p");
+    p.textContent = para;
+    body.appendChild(p);
+  });
+}
+$("#open-about").addEventListener("click", function(){ renderAbout(); openModal("#about-modal"); });
+
+var pendingGroupLogo = null;
+function renderGroupLogoPreview(logo){
+  var preview = $("#ae-logo-preview");
+  var label = $("#ae-logo-label");
+  preview.innerHTML = "";
+  if(logo && logo.dataUrl){
+    label.textContent = logo.filename || "Logo selected";
+    preview.innerHTML = '<img src="'+logo.dataUrl+'" alt="Group logo preview">';
+  }else{
+    label.textContent = "Click to choose a logo image";
+  }
+}
+$("#edit-about-btn").addEventListener("click", function(){
+  if(!isAdmin){ toast("Enable admin mode first", "err"); return; }
+  $("#ae-title").value = state.aboutTitle || "About the Group";
+  $("#ae-text").value = (state.aboutText && state.aboutText.length ? state.aboutText : DEFAULT_ABOUT_TEXT).join("\n\n");
+  pendingGroupLogo = state.groupLogo ? JSON.parse(JSON.stringify(state.groupLogo)) : null;
+  $("#ae-logo-input").value = "";
+  renderGroupLogoPreview(pendingGroupLogo);
+  $("#about-modal").classList.remove("open");
+  openModal("#about-edit-modal");
+  setTimeout(function(){ $("#ae-title").focus(); }, 60);
+});
+$("#ae-logo-input").addEventListener("change", function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ toast("Please choose a JPG, PNG, or WebP image", "err"); e.target.value=""; return; }
+  if(f.size > 5*1024*1024){ toast("Logo image is larger than 5 MB", "err"); e.target.value=""; return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    pendingGroupLogo = { filename:f.name, dataUrl:reader.result, size:f.size, updated:new Date().toISOString() };
+    renderGroupLogoPreview(pendingGroupLogo);
+  };
+  reader.onerror = function(){ toast("Could not read logo image", "err"); };
+  reader.readAsDataURL(f);
+});
+$("#about-save-btn").addEventListener("click", function(){
+  var title = $("#ae-title").value.trim();
+  if(!title){ toast("Section title is required", "err"); return; }
+  var paras = $("#ae-text").value.split(/\n\s*\n/).map(function(t){ return t.trim(); }).filter(Boolean);
+  if(!paras.length){ toast("Add at least one paragraph of text", "err"); return; }
+  state.aboutTitle = title;
+  state.aboutText = paras;
+  state.groupLogo = pendingGroupLogo || null;
+  renderAbout();
+  $("#about-edit-modal").classList.remove("open");
+  touch();
+  toast("About the Group saved", "ok");
+});
 
 /* ============================================================
-   PORTAL SETTINGS — name + icon (admin)
+   PORTAL SETTINGS — name + icon + icon scale (admin)
 ============================================================ */
 var pendingPortalIcon = null;
+var portalScaleOriginal = 1;
 function renderPortalIconPreview(icon){
   var preview = $("#pm-icon-preview");
   var label = $("#pm-icon-label");
@@ -2322,6 +2537,19 @@ function renderPortalIconPreview(icon){
   }else{
     label.textContent = "Click to choose an icon image";
   }
+  updateIconScalePreview();
+}
+function applyIconScale(scale){
+  document.documentElement.style.setProperty("--icon-scale", scale);
+}
+function updateIconScalePreview(){
+  var box = $("#pm-icon-scale-preview");
+  var srcIcon = pendingPortalIcon;
+  if(srcIcon && srcIcon.dataUrl){
+    box.innerHTML = '<img src="'+srcIcon.dataUrl+'" alt="">';
+  }else{
+    box.innerHTML = '<span class="dot"></span>';
+  }
 }
 $("#edit-portal-btn").addEventListener("click", function(){
   if(!isAdmin){ toast("Enable admin mode first", "err"); return; }
@@ -2329,6 +2557,13 @@ $("#edit-portal-btn").addEventListener("click", function(){
   pendingPortalIcon = state.siteIcon ? JSON.parse(JSON.stringify(state.siteIcon)) : null;
   $("#pm-icon-input").value = "";
   renderPortalIconPreview(pendingPortalIcon);
+  portalScaleOriginal = state.siteIconScale || 1;
+  var pct = Math.round(portalScaleOriginal * 100);
+  $("#pm-icon-scale").value = pct;
+  $("#pm-icon-scale-val").textContent = pct + "%";
+  var previewBox = $("#pm-icon-scale-preview");
+  previewBox.style.transform = "scale(" + portalScaleOriginal + ")";
+  applyIconScale(portalScaleOriginal);
   openModal("#portal-modal");
   setTimeout(function(){ $("#pm-name").focus(); }, 60);
 });
@@ -2341,9 +2576,30 @@ $("#pm-icon-input").addEventListener("change", function(e){
   reader.onload = function(){
     pendingPortalIcon = { filename:f.name, dataUrl:reader.result, size:f.size, updated:new Date().toISOString() };
     renderPortalIconPreview(pendingPortalIcon);
+    // Show the newly chosen icon live in the actual header right away.
+    var wrap = $("#brand-icon");
+    if(wrap) wrap.innerHTML = '<img src="'+pendingPortalIcon.dataUrl+'" alt="Portal icon">';
   };
   reader.onerror = function(){ toast("Could not read icon image", "err"); };
   reader.readAsDataURL(f);
+});
+$("#pm-icon-scale").addEventListener("input", function(e){
+  var pct = parseInt(e.target.value, 10) || 100;
+  var scale = pct / 100;
+  $("#pm-icon-scale-val").textContent = pct + "%";
+  $("#pm-icon-scale-preview").style.transform = "scale(" + scale + ")";
+  applyIconScale(scale); // live-update the real header icon as the slider moves
+});
+function revertPortalPreview(){
+  applyIconScale(portalScaleOriginal);
+  renderBrandIcon();
+}
+$("#portal-cancel-btn").addEventListener("click", function(){
+  revertPortalPreview();
+  $("#portal-modal").classList.remove("open");
+});
+$("#portal-modal").addEventListener("click", function(e){
+  if(e.target === this) revertPortalPreview();
 });
 $("#portal-save-btn").addEventListener("click", function(){
   var name = $("#pm-name").value.trim();
@@ -2351,6 +2607,8 @@ $("#portal-save-btn").addEventListener("click", function(){
   state.siteText.brandMark = name;
   $("[data-editable='brandMark']").textContent = name;
   state.siteIcon = pendingPortalIcon || null;
+  state.siteIconScale = (parseInt($("#pm-icon-scale").value, 10) || 100) / 100;
+  applyIconScale(state.siteIconScale);
   renderBrandIcon();
   $("#portal-modal").classList.remove("open");
   touch();
@@ -2413,12 +2671,14 @@ function renderConnectList(){
       phoneBtn.addEventListener("click", function(){ openCallChatModal(p); });
       actions.appendChild(phoneBtn);
     }
-    var editBtn = el("button", "mini-btn admin-only", ICON_EDIT);
-    editBtn.type = "button";
-    editBtn.title = "Edit " + (p.name || "person");
-    editBtn.setAttribute("aria-label", "Edit " + (p.name || "person"));
-    editBtn.addEventListener("click", function(){ openPersonModal(p.id); });
-    actions.appendChild(editBtn);
+    if(isAdmin){
+      var editBtn = el("button", "mini-btn", ICON_EDIT);
+      editBtn.type = "button";
+      editBtn.title = "Edit " + (p.name || "person");
+      editBtn.setAttribute("aria-label", "Edit " + (p.name || "person"));
+      editBtn.addEventListener("click", function(){ openPersonModal(p.id); });
+      actions.appendChild(editBtn);
+    }
     row.appendChild(avatar); row.appendChild(meta); row.appendChild(actions);
     wrap.appendChild(row);
   });
@@ -2543,11 +2803,15 @@ $("#import-input").addEventListener("change", function(e){
       if(!data || !Array.isArray(data.companies)) throw new Error("bad shape");
       data.siteText = data.siteText || {};
       data.siteIcon = data.siteIcon || null;
+      data.siteIconScale = data.siteIconScale || 1;
       data.marketingTeam = (data.marketingTeam || []).map(function(p){
         p.profileImage = p.profileImage || null;
         p.phone = p.phone || ""; p.email = p.email || "";
         return p;
       });
+      data.aboutTitle = data.aboutTitle || "About the Group";
+      data.aboutText = (data.aboutText && data.aboutText.length) ? data.aboutText : DEFAULT_ABOUT_TEXT.slice();
+      data.groupLogo = data.groupLogo || null;
       state = data;
       window.__DLI_STATE__ = state;
       renderAll();
@@ -2575,6 +2839,7 @@ function renderAll(){
   renderFooterMeta();
   applySiteText();
   renderBrandIcon();
+  renderAbout();
   renderUniverseTags();
   renderGrid();
   renderConnectList();
@@ -2617,21 +2882,83 @@ function restoreAdminSession(){
 function setupMouseGlow(){
   var glow = $("#mouse-glow");
   var stage = $("#hero-stage");
-  if(!glow || !stage || reduceMotion) return;
-  var raf = null, nx = 0, ny = 0;
+  var label = $("#cursor-label");
+  if(!glow || !stage) return;
+  if(reduceMotion){
+    if(label) label.remove();
+    return;
+  }
+  var raf = null, nx = 0, ny = 0, cx = 0, cy = 0, overStage = false;
   function apply(){
     glow.style.setProperty("--mx", nx + "px");
     glow.style.setProperty("--my", ny + "px");
+    if(label){
+      label.style.transform = "translate(" + cx + "px," + cy + "px) translate(-50%,-50%)";
+      label.classList.toggle("show", overStage);
+    }
     raf = null;
   }
   stage.addEventListener("mousemove", function(e){
     var r = stage.getBoundingClientRect();
     nx = e.clientX - r.left;
     ny = e.clientY - r.top;
+    cx = e.clientX; cy = e.clientY;
+    // Only show "click to search" while hovering the empty background —
+    // not while over the hero copy, buttons, or links.
+    overStage = (e.target === stage || e.target === glow);
+    stage.classList.toggle("hide-native-cursor", overStage);
     if(!raf) raf = requestAnimationFrame(apply);
   }, { passive:true });
   stage.addEventListener("mouseenter", function(){ glow.classList.add("show"); });
-  stage.addEventListener("mouseleave", function(){ glow.classList.remove("show"); });
+  stage.addEventListener("mouseleave", function(){
+    glow.classList.remove("show");
+    overStage = false;
+    stage.classList.remove("hide-native-cursor");
+    if(label) label.classList.remove("show");
+  });
+}
+
+/* ============================================================
+   SCROLL SPEED WIDGET — measures scroll velocity, reacts with a quote
+============================================================ */
+function setupScrollSpeed(){
+  var fill = $("#scroll-speed-fill");
+  var msg = $("#scroll-speed-msg");
+  if(!fill || !msg) return;
+  var lastY = window.scrollY, lastT = performance.now();
+  var idleTimer = null;
+  var SLOW_MAX = 0.05;      // px/ms — below this (but still moving) reads as "too slow"
+  var FAST_MIN = 1.3;       // px/ms — above this reads as "too fast"
+  var BAR_MAX = 2.2;        // px/ms mapped to a full bar
+  function onScroll(){
+    var y = window.scrollY;
+    var t = performance.now();
+    var dt = t - lastT;
+    var dy = Math.abs(y - lastY);
+    lastY = y; lastT = t;
+    if(dt <= 0 || dy === 0) return;
+    var speed = dy / dt;
+    var pct = Math.min(1, speed / BAR_MAX);
+    fill.style.height = (pct*100) + "%";
+    if(speed < SLOW_MAX){
+      msg.textContent = "Pull harder";
+      msg.classList.add("show");
+      fill.style.background = "var(--ink-faint)";
+    }else if(speed > FAST_MIN){
+      msg.textContent = "Slow..Slowww";
+      msg.classList.add("show");
+      fill.style.background = "var(--accent)";
+    }else{
+      msg.classList.remove("show");
+      fill.style.background = "var(--accent)";
+    }
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){
+      msg.classList.remove("show");
+      fill.style.height = "0%";
+    }, 900);
+  }
+  window.addEventListener("scroll", onScroll, { passive:true });
 }
 
 function init(){
@@ -2640,6 +2967,7 @@ function init(){
   setupEditableText();
   setupTheme();
   setupMouseGlow();
+  setupScrollSpeed();
   var ok = reduceMotion ? false : initScene();
 
   if(ok){
